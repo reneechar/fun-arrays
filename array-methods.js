@@ -93,19 +93,6 @@ sumOfInterests = dataset.filter(bankAccount => {
  */
 var sumOfHighInterests = null;
 
-function mapAccounts(bankAccount) {
-  
-};
-
-function reduceStates(prevBankAccount,currentBankAccount) {
-  console.log('prevBankAccount ',prevBankAccount)
-  if (prevBankAccount.state === currentBankAccount.state) {
-    return {
-      interest: prevBankAccount.interest + currentBankAccount.interest,
-      state: currentBankAccount.state
-    }
-  }
-}
 var stateInterestSums = {};
 
 var stateInterest = dataset.filter(bankAccount => {
@@ -124,45 +111,21 @@ var stateInterest = dataset.filter(bankAccount => {
 
 stateInterest.forEach(bankAccount => {
   if(!stateInterestSums.hasOwnProperty(bankAccount.state)) {
-    stateInterestSums[bankAccount.state] = Math.round(bankAccount.interest*100)/100;
+    stateInterestSums[bankAccount.state] = bankAccount.interest;
   } else {
-    stateInterestSums[bankAccount.state] = Math.round((stateInterestSums[bankAccount.state] + bankAccount.interest)*100)/100;
+    stateInterestSums[bankAccount.state] += bankAccount.interest;
   }
 });
-
-
-console.log('stateInterestSums',stateInterestSums)
 
 var interestArr = Object.keys(stateInterestSums).map(key => {
   return stateInterestSums[key];
 });
 
-console.log('interestArr ',interestArr);
-
 var sumOfHighInterests = interestArr.filter(interestRates => { 
   return interestRates > 50000.00;
 }).reduce((prev, curr) => {
-  return Math.round((prev + curr)*100)/100;
+  return prev + curr;
 })
-
-
-// .reduce((previous,current)=> {
-//   console.log('previous', previous);
-//   if(previous.state === current.state) {
-//     return {
-//       interest: current.interest + previous.interest,
-//       state: current.state
-//     }
-//   } 
-//   return previous + current;
-// })
-console.log('sumOfHighInterests ',sumOfHighInterests);
-// .filter(amount => {
-//   return amount > 50000.00;
-// }).reduce((previous,current) => {
-//   return Math.round((previous + current)*100)/100;
-// })
-
 
 
 /*
@@ -174,6 +137,19 @@ console.log('sumOfHighInterests ',sumOfHighInterests);
       the value must be rounded to the nearest cent
  */
 var stateSums = null;
+
+bankBalanceByStateArray = {}
+
+dataset.forEach(bankAccount => {
+  if(!bankBalanceByStateArray.hasOwnProperty(bankAccount.state)) {
+    bankBalanceByStateArray[bankAccount.state] = parseFloat(bankAccount.amount);
+  } else {
+    bankBalanceByStateArray[bankAccount.state] = 
+    Math.round((bankBalanceByStateArray[bankAccount.state] + Math.round(parseFloat(bankAccount.amount)*100)/100)*100)/100;
+  }
+});
+
+stateSums = bankBalanceByStateArray
 
 /*
   set lowerSumStates to an array containing
