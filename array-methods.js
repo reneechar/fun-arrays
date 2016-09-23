@@ -93,39 +93,41 @@ sumOfInterests = dataset.filter(bankAccount => {
  */
 var sumOfHighInterests = null;
 
-var stateInterestSums = {};
+function roundToCent(unroundedAmount) {
+  return Math.round(unroundedAmount*100)/100;
+}
 
-var stateInterest = dataset.filter(bankAccount => {
-  return bankAccount.state !== 'WI' &&
-  bankAccount.state !== 'IL' &&
-  bankAccount.state !== 'WY' &&
-  bankAccount.state !== 'OH' &&
-  bankAccount.state !== 'GA' &&
-  bankAccount.state !== 'DE'
-}).map(bankAccount => {
+var stateInterestObj = dataset.filter(account => {
+  return ['WI', 'IL', 'WY', 'OH', 'GA','DE'].indexOf(account.state) < 0;
+}).map(account => {
   return {
-    interest: Math.round(parseFloat(bankAccount.amount)*18.9)/100,
-    state: bankAccount.state
+    state: account.state,
+    amount: parseFloat(account.amount)
   }
-});
-
-stateInterest.forEach(bankAccount => {
-  if(!stateInterestSums.hasOwnProperty(bankAccount.state)) {
-    stateInterestSums[bankAccount.state] = bankAccount.interest;
+}).map(account => {
+  return {
+    state: account.state,
+    interest: account.amount*.189
+  }
+}).reduce((stateInterestObj, account) => {
+  if(stateInterestObj.hasOwnProperty(account.state)) {
+    stateInterestObj[account.state] += account.interest;
   } else {
-    stateInterestSums[bankAccount.state] += bankAccount.interest;
+    stateInterestObj[account.state] = account.interest;
   }
-});
+  return stateInterestObj;
+},{})
 
-var interestArr = Object.keys(stateInterestSums).map(key => {
-  return stateInterestSums[key];
-});
+let stateInterestArray = [];
+for (var key in stateInterestObj) {
+  stateInterestArray.push(stateInterestObj[key]);
+}
 
-var sumOfHighInterests = interestArr.filter(interestRates => { 
-  return interestRates > 50000.00;
-}).reduce((prev, curr) => {
-  return prev + curr;
-})
+sumOfHighInterests = stateInterestArray.filter(interest => {
+  return interest > 50000.00; //start from here
+}).reduce((total,interest) => {
+  return roundToCent(total + interest);
+});
 
 
 /*
@@ -136,20 +138,18 @@ var sumOfHighInterests = interestArr.filter(interestRates => {
     and the value is the sum of all amounts from that state
       the value must be rounded to the nearest cent
  */
-var stateSums = null;
+var stateSums = {};
 
-bankBalanceByStateArray = {}
 
 dataset.forEach(bankAccount => {
-  if(!bankBalanceByStateArray.hasOwnProperty(bankAccount.state)) {
-    bankBalanceByStateArray[bankAccount.state] = parseFloat(bankAccount.amount);
+  if(!stateSums.hasOwnProperty(bankAccount.state)) {
+    stateSums[bankAccount.state] = parseFloat(bankAccount.amount);
   } else {
-    bankBalanceByStateArray[bankAccount.state] = 
-    Math.round((bankBalanceByStateArray[bankAccount.state] + Math.round(parseFloat(bankAccount.amount)*100)/100)*100)/100;
+    stateSums[bankAccount.state] = 
+    Math.round((stateSums[bankAccount.state] + Math.round(parseFloat(bankAccount.amount)*100)/100)*100)/100;
   }
 });
 
-stateSums = bankBalanceByStateArray
 
 /*
   set lowerSumStates to an array containing
@@ -159,6 +159,28 @@ stateSums = bankBalanceByStateArray
  */
 var lowerSumStates = null;
 
+let stateTotalsObj = dataset.map(account => {
+  return {
+    state : account.state,
+    amount : parseFloat(account.amount)
+  };
+}).reduce((stateAmountObj, account) => {
+  if(stateAmountObj.hasOwnProperty(account.state)) {
+    stateAmountObj[account.state] += account.amount;
+  } else {
+    stateAmountObj[account.state] = account.amount;
+  }
+  return stateAmountObj;
+}, {});
+
+console.log('lowerSumStates', lowerSumStates);
+lowerSumStates = [];
+for(var key in stateTotalsObj) {
+  if(stateTotalsObj[key] < 1000000) {
+    lowerSumStates.push(key);
+  }
+};
+
 /*
   set higherStateSums to be the sum of 
     all amounts of every state
@@ -166,6 +188,17 @@ var lowerSumStates = null;
       greater than 1,000,000
  */
 var higherStateSums = null;
+higherStateSums = [];
+
+for (var key in stateTotalsObj) {
+  if (stateTotalsObj[key] > 1000000) {
+    higherStateSums.push(stateTotalsObj[key]);
+  }
+}
+
+higherStateSums = higherStateSums.reduce((total, current) => {
+  return total + current;
+});
 
 /*
   set areStatesInHigherStateSum to be true if
